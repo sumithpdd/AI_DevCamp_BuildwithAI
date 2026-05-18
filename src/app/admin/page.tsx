@@ -1561,7 +1561,7 @@ export default function AdminPage() {
                         <strong className="text-gray-400">userStatus = certified</strong>,{" "}
                         <strong className="text-gray-400">≥1 assignment approved</strong>, and{" "}
                         <strong className="text-gray-400">project status = passed</strong>. Use{" "}
-                        <strong className="text-gray-400">Export CSV</strong> for the ready cohort only.
+                        <strong className="text-gray-400">Export CSV</strong> for all certified users with completion columns.
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
@@ -1576,6 +1576,25 @@ export default function AdminPage() {
                       </label>
                       <button
                         type="button"
+                        disabled={certifiedCompletionAudit.rows.length === 0}
+                        onClick={() =>
+                          exportCertifiedCompletionCsv(
+                            certifiedCompletionToExportRows(
+                              certifiedCompletionAudit.rows,
+                              users,
+                              sessions,
+                              attendance
+                            )
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-gray-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg"
+                        title="Download CSV for all certified users with completion columns"
+                      >
+                        <Download size={12} />
+                        Export CSV ({certifiedCompletionAudit.rows.length})
+                      </button>
+                      <button
+                        type="button"
                         disabled={certifiedCompletionAudit.ready.length === 0}
                         onClick={() =>
                           exportCertifiedCompletionCsv(
@@ -1587,11 +1606,11 @@ export default function AdminPage() {
                             )
                           )
                         }
-                        className="inline-flex items-center gap-1.5 text-xs font-mono font-bold text-gray-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg"
-                        title="Download CSV for certified users with ≥1 approved assignment and a passed project"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-200 border border-emerald-500/30 hover:bg-emerald-500/10 disabled:opacity-40 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg"
+                        title="Download CSV for only users who meet all completion criteria"
                       >
                         <Download size={12} />
-                        Export CSV ({certifiedCompletionAudit.ready.length})
+                        Ready only ({certifiedCompletionAudit.ready.length})
                       </button>
                     </div>
                   </div>

@@ -47,7 +47,7 @@ A participant appears in the **export-ready** cohort when **all** of the followi
 | At least one approved assignment | **Assignments** tab → status **Approved** |
 | Final project passed | **Projects** tab → status **Passed** |
 
-**Export:** **Admin → Users** → **Certified completion — export ready** → **Export CSV**. See [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md#certified-completion-export-operator-checklist).
+**Export:** **Admin → Users** → **Certified completion — export ready** → **Export CSV** downloads all certified users with completion columns; **Ready only** downloads just the users who meet all checks. See [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md#certified-completion-export-operator-checklist).
 
 **Distinction:** **Project `failed`** means the final submission did not meet requirements; **`userStatus: "failed"`** means the participant did not complete the programme (e.g. very low attendance). They are independent fields.
 
@@ -137,7 +137,7 @@ flowchart LR
   subgraph criteria["Export-ready user"]
     C1[userStatus certified] --> C2[≥1 assignment approved]
     C2 --> C3[≥1 project passed]
-    C3 --> C4[Export CSV on Users tab]
+    C3 --> C4[Export CSV / Ready only on Users tab]
   end
 ```
 

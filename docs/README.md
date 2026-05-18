@@ -27,7 +27,7 @@ User visits site
   └─ Approved user: full session content, recordings, resources
   └─ Optional: live self check-in on /sessions (code + window set in Session Editor)
   └─ Assignments & projects submitted; admin reviews in /admin (assignment Approved, project Passed/Failed)
-  └─ Organiser exports completion-ready cohort (certified + approved + passed) from Admin → Users
+  └─ Organiser exports certified users with completion columns; optional ready-only export from Admin → Users
   └─ Signed-in user: optional private learning checklist /dashboard/tasks (imports from templates when empty)
   └─ DevcampBuddies (/buddies): opt-in profilePublic, directory, buddy requests, accepted pairs — APIs only for buddy collections
   └─ Programme leave → programOptOut (no app until admin restores)
@@ -59,6 +59,6 @@ Use this as a changelog-style index; details live in the linked docs.
 | **Shared UI / logging** | `SocialBrandIcons.tsx`; `src/lib/admin/*` domain helpers; `src/lib/logging/*` for safer client logs. [02](./02-project-structure.md). |
 | **Learning tasks** | Private checklist **`learningTasks`** + catalogue **`learningTaskTemplates`**; **`/dashboard/tasks`**; **`/admin/learning-tasks`** (seed, clear, edit). Full flows: [09](./09-learning-tasks-architecture.md); APIs [07](./07-api-routes.md); schema [03](./03-database-schema.md). |
 | **Inactive archive** | Collection **`disabledUsers/{uid}`**; **`/admin` → Inactive** (multi-select bulk archive / restore); **`verifyAuth`** + **`ensure-profile`** respect archived profiles (**`403 ACCOUNT_DISABLED`**). [03](./03-database-schema.md), [04](./04-auth-and-security.md), [07](./07-api-routes.md), [08](./08-site-deployment-and-admin.md). |
-| **Certified completion export** | **Admin → Users** panel: export-ready when **`userStatus = certified`**, ≥1 assignment **`approved`**, ≥1 project **`passed`**. Project review also supports **`failed`** (distinct from **`userStatus: failed`**). `certifiedCompletion.ts`, `exportCertifiedCompletionCsv.ts`. [03](./03-database-schema.md#certification-completion-export-cohort), [08](./08-site-deployment-and-admin.md#certified-completion-export-operator-checklist), [10](./10-customer-journey.md). |
+| **Certified completion export** | **Admin → Users** panel: exports certified users with columns for **Certified**, approved assignment, project passed, and export-ready; **Ready only** exports users where **`userStatus = certified`**, ≥1 assignment **`approved`**, and ≥1 project **`passed`**. Project review also supports **`failed`** (distinct from **`userStatus: failed`**). `certifiedCompletion.ts`, `exportCertifiedCompletionCsv.ts`. [03](./03-database-schema.md#certification-completion-export-cohort), [08](./08-site-deployment-and-admin.md#certified-completion-export-operator-checklist), [10](./10-customer-journey.md). |
 
 Start with [01-project-overview.md](./01-project-overview.md) →

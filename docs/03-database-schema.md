@@ -338,7 +338,7 @@ Organisers export a **completion-ready** cohort from **Admin → Users** when a 
 | Assignment approved | ≥1 `assignments` doc for that `userId` with `status === "approved"` |
 | Project passed | ≥1 `projects` doc for that `userId` with `status === "passed"` |
 
-**Export:** **Export CSV** on the **Certified completion — export ready** panel downloads `ai-devcamp-certified-completion-YYYY-MM-DD.csv` (name, email, approved assignment count, project title/status, sessions attended, profile links). The general **Download CSV** on the Users toolbar still exports the **current user filter** (attendee list), not this completion rule.
+**Export:** **Export CSV** on the **Certified completion — export ready** panel downloads all certified attendees in `ai-devcamp-certified-completion-YYYY-MM-DD.csv` with explicit **Certified**, **Has Approved Assignment**, **Project Passed**, and **Export Ready** columns. **Ready only** downloads just the users who meet all three checks. The general **Download CSV** on the Users toolbar still exports the **current user filter** (attendee list), not this completion rule.
 
 See [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md) and [10-customer-journey.md](./10-customer-journey.md).
 

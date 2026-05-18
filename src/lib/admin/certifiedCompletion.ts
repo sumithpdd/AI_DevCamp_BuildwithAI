@@ -64,7 +64,7 @@ export function buildCertifiedCompletionAudit(
 }
 
 export function certifiedCompletionToExportRows(
-  readyRows: CertifiedCompletionRow[],
+  rows: CertifiedCompletionRow[],
   users: UserProfile[],
   sessions: Session[],
   attendance: Record<string, Record<string, boolean | string>>
@@ -73,13 +73,18 @@ export function certifiedCompletionToExportRows(
   const attendanceCount = (uid: string) =>
     sessions.filter((s) => attendance[uid]?.[s.id] === true).length;
 
-  return readyRows.map((r) => {
+  return rows.map((r) => {
     const user = userByUid.get(r.uid);
     return {
       user: user ?? ({ uid: r.uid, displayName: r.displayName, email: r.email } as UserProfile),
+      isCertified: r.userStatus === "certified",
+      hasApprovedAssignment: r.approvedAssignmentCount > 0,
+      hasPassedProject: r.passedProjectCount > 0,
+      isExportReady: r.meetsCriteria,
       approvedAssignmentCount: r.approvedAssignmentCount,
+      passedProjectCount: r.passedProjectCount,
       projectTitle: r.bestProjectTitle ?? "",
-      projectStatus: r.bestProjectStatus ?? "passed",
+      projectStatus: r.bestProjectStatus ?? "",
       sessionsAttended: `${attendanceCount(r.uid)}/${sessions.length}`,
     };
   });
