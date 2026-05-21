@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HeartHandshake, Loader2, Globe, User, Trash2, X } from "lucide-react";
+import { HeartHandshake, Loader2, Globe, User, Trash2, X, Award, ExternalLink } from "lucide-react";
+import { certifierCredentialViewUrl } from "@/lib/certifierLinks";
+import { syncCertifierCredentials } from "@/lib/adminService";
 import toast from "react-hot-toast";
 import { UserProfile, UserRole, UserStatus } from "@/types";
 import StatusDropdown from "@/components/admin/StatusDropdown";
@@ -67,6 +69,7 @@ export default function UserEditor({ user, onClose, onSave, onDeleteUser, adminC
   const [accountDisabledReason, setAccountDisabledReason] = useState(user.accountDisabledReason || "");
   const [programOptOut, setProgramOptOut] = useState(user.programOptOut === true);
   const [profilePublic, setProfilePublic] = useState(user.profilePublic === true);
+  const [certifierSyncing, setCertifierSyncing] = useState(false);
 
   useEffect(() => {
     setDisplayName(user.displayName || "");
@@ -299,6 +302,57 @@ export default function UserEditor({ user, onClose, onSave, onDeleteUser, adminC
               </div>
             </div>
           </div>
+
+          {(userStatus === "certified" || user.certifierCredentialId) && (
+            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4 space-y-3">
+              <div className="flex items-center gap-2 text-emerald-300 font-mono text-xs uppercase tracking-wider">
+                <Award size={14} />
+                Certifier certificate
+              </div>
+              {user.certifierCredentialId ? (
+                <p className="text-xs text-gray-400 font-mono break-all">
+                  ID: {user.certifierCredentialId}
+                  {user.certifierCredentialStatus ? ` · ${user.certifierCredentialStatus}` : ""}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500">No credential linked yet — sync from Certifier by email.</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {user.certifierCredentialPublicId && (
+                  <a
+                    href={certifierCredentialViewUrl(user.certifierCredentialPublicId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/10"
+                  >
+                    <ExternalLink size={12} />
+                    Open certificate
+                  </a>
+                )}
+                <button
+                  type="button"
+                  disabled={certifierSyncing || !user.uid}
+                  onClick={async () => {
+                    if (!user.uid) return;
+                    setCertifierSyncing(true);
+                    try {
+                      const r = await syncCertifierCredentials([user.uid]);
+                      toast.success(`Certifier sync: ${r.synced} linked, ${r.missing} not found`);
+                      onClose();
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : "Sync failed");
+                    } finally {
+                      setCertifierSyncing(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-gray-950 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 px-3 py-1.5 rounded-lg"
+                >
+                  {certifierSyncing ? <Loader2 size={12} className="animate-spin" /> : null}
+                  Sync from Certifier
+                </button>
+              </div>
+            </div>
+          )}
 
           <div>
             <div className="text-[10px] font-mono text-rose-400 uppercase tracking-widest mb-2">Account lock</div>

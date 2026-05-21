@@ -5,6 +5,7 @@ import { parseLocationFields } from "@/lib/locationCleanup";
 import { findPendingUserByEmail } from "@/lib/server/userImportLookup";
 import { applyPendingRowToEnsureProfileData } from "@/lib/server/mergePendingUserIntoProfile";
 import type { UserProfile } from "@/types";
+import { isRegistrationOpen } from "@/lib/registrationOpen";
 
 export type EnsureUserProfileResult = {
   profileExists: boolean;
@@ -55,6 +56,10 @@ export async function ensureUserProfileForUid(uid: string): Promise<EnsureUserPr
   const pending = await findPendingUserByEmail(db, email);
   const pre = pending?.data ?? null;
   const preDocId = pending?.docId;
+
+  if (!isRegistrationOpen() && !pre) {
+    throw new Error("REGISTRATION_CLOSED");
+  }
 
   if (pre && pre.accountDisabled === true) {
     throw new Error("ACCOUNT_DISABLED");

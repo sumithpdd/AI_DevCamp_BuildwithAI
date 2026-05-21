@@ -28,6 +28,7 @@ import { getSessionSpeakersList, speakerRecordsToLookup } from "@/lib/sessionSpe
 import type { Speaker } from "@/types";
 import AuthModal from "@/components/AuthModal";
 import OpenLoginFromQuery from "@/components/OpenLoginFromQuery";
+import { isRegistrationOpen } from "@/lib/registrationOpen";
 import { useAuth } from "@/contexts/AuthContext";
 
 const WEEK_ICONS = [Code2, Brain, BookOpen, Rocket];
@@ -216,14 +217,25 @@ export default function HomePage() {
               </Link>
             ) : (
               <>
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-gray-950 font-bold font-mono text-base px-10 py-4 rounded-lg transition-all shadow-lg shadow-green-500/40 hover:shadow-green-400/50"
-                >
-                  <Zap size={20} />
-                  ./register --free
-                  <ArrowRight size={18} />
-                </Link>
+                {isRegistrationOpen() ? (
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-gray-950 font-bold font-mono text-base px-10 py-4 rounded-lg transition-all shadow-lg shadow-green-500/40 hover:shadow-green-400/50"
+                  >
+                    <Zap size={20} />
+                    ./register --free
+                    <ArrowRight size={18} />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => openLogin()}
+                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-gray-950 font-bold font-mono text-base px-10 py-4 rounded-lg transition-all shadow-lg shadow-green-500/40 hover:shadow-green-400/50"
+                  >
+                    $ login — existing attendees
+                    <ArrowRight size={18} />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => openLogin()}
@@ -521,14 +533,16 @@ export default function HomePage() {
                 </Link>
               ) : (
                 <>
-                  <Link
-                    href="/register"
-                    className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-gray-950 font-bold font-mono text-base px-12 py-4 rounded-lg transition-all shadow-lg shadow-green-500/40 hover:shadow-green-400/50"
-                  >
-                    <Zap size={20} />
-                    ./register --free
-                    <ArrowRight size={18} />
-                  </Link>
+                  {isRegistrationOpen() ? (
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-gray-950 font-bold font-mono text-base px-12 py-4 rounded-lg transition-all shadow-lg shadow-green-500/40 hover:shadow-green-400/50"
+                    >
+                      <Zap size={20} />
+                      ./register --free
+                      <ArrowRight size={18} />
+                    </Link>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => openLogin()}

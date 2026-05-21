@@ -16,6 +16,7 @@ import {
   setAttendanceForSession,
   updateUserFields,
   approveAllPendingUsersFromServer,
+  syncCertifierCredentials,
   setKickoffAttendanceNote,
   fetchUsersNeverAttendedSessions,
   fetchDisabledUsersArchive,
@@ -47,8 +48,10 @@ import SessionEditor from "@/components/admin/SessionEditor";
 import UserEditor from "@/components/admin/UserEditor";
 import ProjectDetailModal from "@/components/admin/ProjectDetailModal";
 import StatusDropdown, { STATUS_CONFIG, ALL_STATUSES } from "@/components/admin/StatusDropdown";
+import { certifierCredentialViewUrl } from "@/lib/certifierLinks";
 import {
   AlertTriangle,
+  Award,
   Bug,
   BookOpen,
   Calendar,
@@ -149,6 +152,7 @@ export default function AdminPage() {
   const [usersKickoffFilter, setUsersKickoffFilter] = useState<KickoffRsvpFilter>("all");
   const [approveAllBusy, setApproveAllBusy] = useState(false);
   const [certifiedCompletionShowReadyOnly, setCertifiedCompletionShowReadyOnly] = useState(true);
+  const [certifierBulkSyncBusy, setCertifierBulkSyncBusy] = useState(false);
 
   const [inactiveNeverAttended, setInactiveNeverAttended] = useState<NeverAttendedUserSummary[]>([]);
   const [inactiveArchived, setInactiveArchived] = useState<UserProfile[]>([]);
@@ -1612,6 +1616,34 @@ export default function AdminPage() {
                         <Download size={12} />
                         Ready only ({certifiedCompletionAudit.ready.length})
                       </button>
+                      <button
+                        type="button"
+                        disabled={certifierBulkSyncBusy}
+                        onClick={async () => {
+                          setCertifierBulkSyncBusy(true);
+                          try {
+                            const r = await syncCertifierCredentials();
+                            toast.success(
+                              `Certifier: ${r.synced} linked · ${r.missing} not in Certifier · ${r.failed} errors`
+                            );
+                            const refreshed = await fetchAllUsers();
+                            setUsers(refreshed);
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Certifier sync failed");
+                          } finally {
+                            setCertifierBulkSyncBusy(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/10 disabled:opacity-40 px-3 py-1.5 rounded-lg"
+                        title="Search Certifier by email for all certified attendees and save credential ids"
+                      >
+                        {certifierBulkSyncBusy ? (
+                          <RefreshCw size={12} className="animate-spin" />
+                        ) : (
+                          <Award size={12} />
+                        )}
+                        Sync Certifier
+                      </button>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 text-[11px] font-mono mb-3">
@@ -1658,10 +1690,13 @@ export default function AdminPage() {
                             <th className="px-3 py-2 text-center whitespace-nowrap">Approved</th>
                             <th className="px-3 py-2 text-center whitespace-nowrap">Project</th>
                             <th className="px-3 py-2 text-center whitespace-nowrap">Ready</th>
+                            <th className="px-3 py-2 text-center whitespace-nowrap">Cert</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {certifiedCompletionDisplayRows.map((r) => (
+                          {certifiedCompletionDisplayRows.map((r) => {
+                            const u = users.find((x) => x.uid === r.uid);
+                            return (
                             <tr key={r.uid} className="border-b border-white/5 hover:bg-white/[0.03]">
                               <td className="px-3 py-2 text-white align-top">{r.displayName}</td>
                               <td className="px-3 py-2 text-gray-500 break-all align-top">{r.email || "—"}</td>
@@ -1690,8 +1725,24 @@ export default function AdminPage() {
                                   <span className="text-gray-600">—</span>
                                 )}
                               </td>
+                              <td className="px-3 py-2 text-center align-top whitespace-nowrap">
+                                {u?.certifierCredentialPublicId ? (
+                                  <a
+                                    href={certifierCredentialViewUrl(u.certifierCredentialPublicId)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-emerald-400 hover:text-emerald-300"
+                                    title="View certificate"
+                                  >
+                                    <Award size={14} className="inline" />
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-600">—</span>
+                                )}
+                              </td>
                             </tr>
-                          ))}
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -1991,6 +2042,18 @@ export default function AdminPage() {
                                 <span className="text-[10px] font-mono uppercase tracking-wide text-slate-300 bg-slate-500/15 border border-slate-500/35 px-1.5 py-0.5 rounded">
                                   De-reg
                                 </span>
+                              )}
+                              {u.certifierCredentialPublicId && (
+                                <a
+                                  href={certifierCredentialViewUrl(u.certifierCredentialPublicId)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] font-mono uppercase tracking-wide text-emerald-300 bg-emerald-500/15 border border-emerald-500/35 px-1.5 py-0.5 rounded inline-flex items-center gap-0.5 hover:bg-emerald-500/25"
+                                  title="Open Certifier credential"
+                                >
+                                  <Award size={10} />
+                                  Cert
+                                </a>
                               )}
                               {userAuthShowsGoogle(u) && (
                                 <span className="text-[10px] font-mono uppercase tracking-wide text-amber-300/90 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded">

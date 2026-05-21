@@ -29,6 +29,7 @@ import Input from "@/components/ui/Input";
 import CopyTextButton from "@/components/ui/CopyTextButton";
 import Button from "@/components/ui/Button";
 import ProfileCompletion from "@/components/ui/ProfileCompletion";
+import ProfileCertificate from "@/components/ProfileCertificate";
 import toast from "react-hot-toast";
 import { unknownErrorMessage } from "@/lib/unknownErrorMessage";
 
@@ -149,6 +150,8 @@ export default function ProfilePage() {
 
         {/* Profile completion indicator */}
         <ProfileCompletion profile={userProfile} variant="full" />
+
+        {userProfile && <ProfileCertificate userProfile={userProfile} />}
 
         <form
           onSubmit={handleSave}

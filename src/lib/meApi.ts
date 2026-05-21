@@ -115,6 +115,31 @@ export async function patchUserProfile(
   return json.data as Record<string, unknown>;
 }
 
+export type MyCertificateResult =
+  | {
+      hasCertificate: true;
+      credentialId: string;
+      publicId: string;
+      status: string;
+      viewUrl: string;
+    }
+  | { hasCertificate: false; message?: string };
+
+export async function fetchMyCertificate(): Promise<MyCertificateResult | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  const token = await user.getIdToken();
+  const res = await fetch("/api/me/certificate", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json();
+  if (!json.ok) {
+    if (res.status === 403) return { hasCertificate: false, message: json.error };
+    throw new Error(json.error || "Failed to load certificate");
+  }
+  return json.data as MyCertificateResult;
+}
+
 export async function linkPreregisterRowOnServer(): Promise<boolean> {
   const user = auth.currentUser;
   if (!user) return false;

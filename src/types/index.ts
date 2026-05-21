@@ -177,6 +177,38 @@ export interface UserProfile {
   registrationMapLat?: number;
   registrationMapLon?: number;
   registrationMapGeocodedAt?: string;
+  /** Certifier credential document id (synced from API). */
+  certifierCredentialId?: string;
+  /** Certifier public id for verify / share link. */
+  certifierCredentialPublicId?: string;
+  /** Certifier status, e.g. draft | issued. */
+  certifierCredentialStatus?: string;
+  /** ISO time when credential ids were last synced from Certifier. */
+  certifierSyncedAt?: string;
+}
+
+export type ActivityEventType =
+  | "session_view"
+  | "session_video_click"
+  | "resource_click"
+  | "resources_folder_click"
+  | "assignment_submitted"
+  | "project_submitted";
+
+/** Server-written row in `activity_events` (Admin SDK only). */
+export interface ActivityEvent {
+  id?: string;
+  userId: string;
+  userEmail?: string | null;
+  type: ActivityEventType;
+  sessionId?: string | null;
+  sessionTitle?: string | null;
+  resourceTitle?: string | null;
+  resourceUrl?: string | null;
+  assignmentId?: string | null;
+  projectId?: string | null;
+  meta?: Record<string, string | number | boolean> | null;
+  createdAt?: Date | string;
 }
 
 /** One person presenting (session may list several). */
@@ -269,6 +301,8 @@ export interface Assignment {
   demoUrl?: string;
   notebookUrl?: string;
   submittedAt: Date | string;
+  /** ISO timestamp written at submit time (client) for reliable display/export. */
+  submittedAtClient?: string;
   status: "submitted" | "reviewed" | "approved";
   feedback?: string;
   grade?: string;
@@ -287,6 +321,7 @@ export interface Project {
   demoUrl?: string;
   screenshotUrls?: string[];
   submittedAt: Date | string;
+  submittedAtClient?: string;
   status: "submitted" | "reviewed" | "shortlisted" | "winner" | "passed" | "failed";
   feedback?: string;
   weekCompleted: number;

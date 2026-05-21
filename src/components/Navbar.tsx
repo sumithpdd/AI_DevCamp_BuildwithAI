@@ -18,7 +18,10 @@ import {
   Shield,
   ClipboardList,
   UsersRound,
+  Award,
 } from "lucide-react";
+import { isRegistrationOpen } from "@/lib/registrationOpen";
+import { certifierCredentialViewUrl } from "@/lib/certifierLinks";
 import toast from "react-hot-toast";
 import ProgramOptOutControl from "@/components/ProgramOptOutControl";
 
@@ -34,9 +37,19 @@ export default function Navbar() {
     setDropdownOpen(false);
   };
 
+  const certUrl =
+    userProfile?.userStatus === "certified" && userProfile.certifierCredentialPublicId
+      ? certifierCredentialViewUrl(userProfile.certifierCredentialPublicId)
+      : userProfile?.userStatus === "certified"
+        ? "/profile#certificate"
+        : null;
+
   const navLinks = [
     { href: "/sessions", label: "Sessions", icon: BookOpen },
     ...(user ? [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] : []),
+    ...(certUrl
+      ? [{ href: certUrl, label: "Certificate", icon: Award, external: certUrl.startsWith("http") }]
+      : []),
     ...(user ? [{ href: "/dashboard/tasks", label: "Tasks", icon: ClipboardList }] : []),
     ...(user ? [{ href: "/submit", label: "Submit", icon: Upload }] : []),
     ...(user ? [{ href: "/buddies", label: "Buddies", icon: UsersRound }] : []),
@@ -67,15 +80,27 @@ export default function Navbar() {
             </Link>
 
             <div className="hidden md:flex items-center gap-1">
-              {navLinks.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  className="text-gray-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                >
-                  {label}
-                </Link>
-              ))}
+              {navLinks.map(({ href, label, external }) =>
+                external ? (
+                  <a
+                    key={href}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-300/90 hover:text-emerald-200 hover:bg-emerald-500/10 px-4 py-2 rounded-lg text-sm font-medium transition-all font-mono"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <Link
+                    key={href}
+                    href={href}
+                    className="text-gray-300 hover:text-white hover:bg-white/5 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                  >
+                    {label}
+                  </Link>
+                )
+              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -152,6 +177,30 @@ export default function Navbar() {
                               <User size={16} />
                               My Profile
                             </Link>
+                            {userProfile?.userStatus === "certified" && (
+                              <Link
+                                href={
+                                  userProfile.certifierCredentialPublicId
+                                    ? certifierCredentialViewUrl(userProfile.certifierCredentialPublicId)
+                                    : "/profile#certificate"
+                                }
+                                target={
+                                  userProfile.certifierCredentialPublicId ? "_blank" : undefined
+                                }
+                                rel={
+                                  userProfile.certifierCredentialPublicId
+                                    ? "noopener noreferrer"
+                                    : undefined
+                                }
+                                onClick={() => setDropdownOpen(false)}
+                                className="flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 transition-colors"
+                              >
+                                <Award size={16} />
+                                {userProfile.certifierCredentialPublicId
+                                  ? "View certificate"
+                                  : "Get certificate"}
+                              </Link>
+                            )}
                             {userProfile?.role === "admin" && (
                               <Link
                                 href="/admin"
@@ -189,12 +238,14 @@ export default function Navbar() {
                       >
                         Sign In
                       </button>
-                      <Link
-                        href="/register"
-                        className="bg-green-500 hover:bg-green-400 text-gray-950 text-sm font-bold px-4 py-2 rounded-lg transition-all shadow-lg font-mono"
-                      >
-                        Register
-                      </Link>
+                      {isRegistrationOpen() && (
+                        <Link
+                          href="/register"
+                          className="bg-green-500 hover:bg-green-400 text-gray-950 text-sm font-bold px-4 py-2 rounded-lg transition-all shadow-lg font-mono"
+                        >
+                          Register
+                        </Link>
+                      )}
                     </div>
                   )}
 
@@ -212,17 +263,31 @@ export default function Navbar() {
 
         {mobileMenuOpen && (
           <div className="md:hidden bg-gray-950 border-t border-white/10 px-4 py-4 space-y-1">
-            {navLinks.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg text-sm font-medium transition-all"
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            ))}
+            {navLinks.map(({ href, label, icon: Icon, external }) =>
+              external ? (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-emerald-300 hover:text-emerald-200 hover:bg-emerald-500/10 px-4 py-3 rounded-lg text-sm font-medium transition-all"
+                >
+                  <Icon size={16} />
+                  {label}
+                </a>
+              ) : (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg text-sm font-medium transition-all"
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              )
+            )}
             {user && (
               <div className="pt-3 border-t border-white/10 mt-2">
                 <ProgramOptOutControl
@@ -242,13 +307,15 @@ export default function Navbar() {
                 >
                   Sign In
                 </button>
-                <Link
-                  href="/register"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center bg-green-500 hover:bg-green-400 text-gray-950 px-4 py-2.5 rounded-lg text-sm font-bold transition-all font-mono"
-                >
-                  Register
-                </Link>
+                {isRegistrationOpen() && (
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full text-center bg-green-500 hover:bg-green-400 text-gray-950 px-4 py-2.5 rounded-lg text-sm font-bold transition-all font-mono"
+                  >
+                    Register
+                  </Link>
+                )}
               </div>
             )}
           </div>

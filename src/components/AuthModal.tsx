@@ -9,6 +9,7 @@ import Input from "./ui/Input";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { isRegistrationOpen } from "@/lib/registrationOpen";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -247,12 +248,18 @@ export default function AuthModal({ isOpen, onClose, initialView = "signin" }: A
           </Button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-5">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" onClick={onClose} className="text-green-400 hover:text-green-300 font-semibold">
-            Register
-          </Link>
-        </p>
+        {isRegistrationOpen() ? (
+          <p className="text-center text-sm text-gray-500 mt-5">
+            Don&apos;t have an account?{" "}
+            <Link href="/register" onClick={onClose} className="text-green-400 hover:text-green-300 font-semibold">
+              Register
+            </Link>
+          </p>
+        ) : (
+          <p className="text-center text-sm text-gray-500 mt-5">
+            New registrations are closed. Sign in with your existing DevCamp account.
+          </p>
+        )}
       </div>
     </div>
   );

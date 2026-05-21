@@ -459,3 +459,31 @@ export async function postTestErrorLogEntry(): Promise<string> {
   }
   return String((json.data as { id?: string })?.id ?? "");
 }
+
+export type CertifierSyncResult = {
+  total: number;
+  synced: number;
+  missing: number;
+  failed: number;
+};
+
+/** Sync Certifier credential ids for certified users (admin API). */
+export async function syncCertifierCredentials(uids?: string[]): Promise<CertifierSyncResult> {
+  const token = await auth.currentUser?.getIdToken();
+  if (!token) throw new Error("Not signed in");
+  const res = await fetch("/api/admin/certifier/sync", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(uids?.length ? { uids } : {}),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(String((json as { error?: string }).error ?? res.status));
+  if (!(json as { ok?: boolean }).ok) {
+    throw new Error(String((json as { error?: string }).error ?? "Sync failed"));
+  }
+  const data = (json as { data: CertifierSyncResult }).data;
+  return data;
+}

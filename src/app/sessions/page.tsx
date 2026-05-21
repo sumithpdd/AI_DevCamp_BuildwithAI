@@ -15,6 +15,7 @@ import SessionSelfCheckInPanel from "@/components/SessionSelfCheckInPanel";
 import { Session } from "@/types";
 import { SPEAKERS as STATIC_SPEAKERS } from "@/data/speakers";
 import { getSessionSpeakersList, speakerRecordsToLookup } from "@/lib/sessionSpeakers";
+import { trackActivity } from "@/lib/activityApi";
 
 function groupByWeek(sessions: Session[]): Record<number, Session[]> {
   return sessions.reduce((acc, s) => {
@@ -206,7 +207,17 @@ export default function SessionsPage() {
 
                               {/* Card header — always visible */}
                               <button
-                                onClick={() => setExpanded(isOpen ? null : session.id)}
+                                onClick={() => {
+                                  const opening = !isOpen;
+                                  setExpanded(opening ? session.id : null);
+                                  if (opening && user && hasSessionAccess) {
+                                    trackActivity({
+                                      type: "session_view",
+                                      sessionId: session.id,
+                                      sessionTitle: session.title,
+                                    });
+                                  }
+                                }}
                                 className="w-full text-left p-5"
                               >
                                 <div className="flex items-start justify-between gap-3">
@@ -423,6 +434,15 @@ export default function SessionsPage() {
                                               href={r.url}
                                               target="_blank"
                                               rel="noopener noreferrer"
+                                              onClick={() =>
+                                                trackActivity({
+                                                  type: "resource_click",
+                                                  sessionId: session.id,
+                                                  sessionTitle: session.title,
+                                                  resourceTitle: r.title,
+                                                  resourceUrl: r.url,
+                                                })
+                                              }
                                               className="inline-flex items-center gap-1.5 text-sm text-orange-400 bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 px-3 py-1.5 rounded-lg transition-colors"
                                             >
                                               <ExternalLink size={12} /> {r.title}
@@ -446,6 +466,14 @@ export default function SessionsPage() {
                                             href={session.videoUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            onClick={() =>
+                                              trackActivity({
+                                                type: "session_video_click",
+                                                sessionId: session.id,
+                                                sessionTitle: session.title,
+                                                resourceUrl: session.videoUrl,
+                                              })
+                                            }
                                             className="inline-flex items-center gap-2 text-sm font-bold text-white bg-red-600/80 hover:bg-red-600 px-5 py-2.5 rounded-xl transition-colors"
                                           >
                                             ▶ Watch Recording
@@ -462,6 +490,14 @@ export default function SessionsPage() {
                                             href={session.resourcesFolderUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            onClick={() =>
+                                              trackActivity({
+                                                type: "resources_folder_click",
+                                                sessionId: session.id,
+                                                sessionTitle: session.title,
+                                                resourceUrl: session.resourcesFolderUrl,
+                                              })
+                                            }
                                             className="inline-flex items-center gap-2 text-sm font-bold text-white bg-sky-600/80 hover:bg-sky-600 px-5 py-2.5 rounded-xl transition-colors"
                                           >
                                             📁 Open Resources Folder

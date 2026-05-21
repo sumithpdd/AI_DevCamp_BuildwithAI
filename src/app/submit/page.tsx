@@ -17,6 +17,7 @@ const GithubIcon = () => (
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
+import { trackActivity } from "@/lib/activityApi";
 
 type SubmitType = "assignment" | "project";
 
@@ -81,7 +82,7 @@ export default function SubmitPage() {
     if (!validateAssignment()) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, "assignments"), {
+      const docRef = await addDoc(collection(db, "assignments"), {
         userId: user!.uid,
         userName: userProfile?.displayName || user!.email,
         weekNumber: assignmentForm.weekNumber,
@@ -93,6 +94,13 @@ export default function SubmitPage() {
         demoUrl: assignmentForm.demoUrl,
         status: "submitted",
         submittedAt: serverTimestamp(),
+        submittedAtClient: new Date().toISOString(),
+      });
+      trackActivity({
+        type: "assignment_submitted",
+        assignmentId: docRef.id,
+        sessionId: assignmentForm.sessionId || undefined,
+        sessionTitle: assignmentForm.title,
       });
       toast.success("Assignment submitted successfully! 🎉");
       setAssignmentForm({
@@ -117,7 +125,7 @@ export default function SubmitPage() {
     if (!validateProject()) return;
     setSubmitting(true);
     try {
-      await addDoc(collection(db, "projects"), {
+      const docRef = await addDoc(collection(db, "projects"), {
         userId: user!.uid,
         userName: userProfile?.displayName || user!.email,
         title: projectForm.title,
@@ -131,6 +139,12 @@ export default function SubmitPage() {
         weekCompleted: projectForm.weekCompleted,
         status: "submitted",
         submittedAt: serverTimestamp(),
+        submittedAtClient: new Date().toISOString(),
+      });
+      trackActivity({
+        type: "project_submitted",
+        projectId: docRef.id,
+        sessionTitle: projectForm.title,
       });
       toast.success("Project submitted successfully! 🚀");
       setProjectForm({

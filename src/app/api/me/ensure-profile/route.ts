@@ -36,6 +36,17 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+    if (message === "REGISTRATION_CLOSED" || message.includes("REGISTRATION_CLOSED")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "New registrations are closed. Sign in with your existing DevCamp account, or contact the organisers.",
+          code: "REGISTRATION_CLOSED",
+        },
+        { status: 403 }
+      );
+    }
     if (message === "PROGRAM_OPT_OUT" || message.includes("PROGRAM_OPT_OUT")) {
       return NextResponse.json(
         {

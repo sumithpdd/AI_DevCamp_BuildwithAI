@@ -54,6 +54,8 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 import { firebaseAuthErrorMessage } from "@/lib/firebaseAuthErrors";
+import { isRegistrationOpen } from "@/lib/registrationOpen";
+import RegistrationClosed from "@/components/RegistrationClosed";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -428,6 +430,10 @@ export default function RegisterPage() {
   }
 
   const progress = ((step - 1) / 3) * 100;
+
+  if (!isRegistrationOpen()) {
+    return <RegistrationClosed />;
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0f0a] flex">

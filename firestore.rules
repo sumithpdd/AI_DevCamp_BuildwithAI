@@ -38,7 +38,13 @@ service cloud.firestore {
 
     /** Maintained only by Admin SDK (DevcampBuddies APIs) — not client-patchable. */
     function touchesServerMaintainedUserFields() {
-      return request.resource.data.diff(resource.data).affectedKeys().hasAny(['buddyCount']);
+      return request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'buddyCount',
+        'certifierCredentialId',
+        'certifierCredentialPublicId',
+        'certifierCredentialStatus',
+        'certifierSyncedAt'
+      ]);
     }
 
     // ── Users ─────────────────────────────────────────────────────────────────
@@ -165,6 +171,11 @@ service cloud.firestore {
     match /learningTaskTemplates/{templateId} {
       allow read: if isSignedIn();
       allow write: if isAdminOrMod();
+    }
+
+    // ── Activity telemetry (views, resource clicks) — server / Admin SDK only ─
+    match /activity_events/{eventId} {
+      allow read, write: if false;
     }
 
     // ── DevcampBuddies (buddyRequests, buddyPairs) — Admin SDK / API only ────
