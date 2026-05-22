@@ -3,6 +3,8 @@
  * Docs: https://developers.certifier.io/docs/api-reference/credentials/search-credentials
  */
 
+import { certifierCredentialViewUrl } from "@/lib/certifierLinks";
+
 const CERTIFIER_BASE = "https://api.certifier.io/v1";
 const DEFAULT_VERSION = "2022-10-26";
 
@@ -37,9 +39,7 @@ function apiVersion(): string {
   return process.env.CERTIFIER_API_VERSION?.trim() || DEFAULT_VERSION;
 }
 
-export function certifierCredentialViewUrl(publicId: string): string {
-  return `https://creds.certifier.io/verify/${publicId}`;
-}
+export { certifierCredentialViewUrl };
 
 async function certifierFetch<T>(path: string, init: RequestInit): Promise<T> {
   const res = await fetch(`${CERTIFIER_BASE}${path}`, {
