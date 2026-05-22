@@ -63,6 +63,23 @@ async function certifierFetch<T>(path: string, init: RequestInit): Promise<T> {
   return json;
 }
 
+function searchBodyForEmail(email: string, op: "equals" | "contains"): Record<string, unknown> {
+  const normalized = email.trim().toLowerCase();
+  return {
+    filter: {
+      AND: [
+        {
+          recipient: {
+            email: { [op]: op === "contains" ? normalized.split("@")[0] : normalized },
+          },
+        },
+      ],
+    },
+    sort: { property: "createdAt", order: "desc" as const },
+    limit: 25,
+  };
+}
+
 /** Find credentials for a recipient email (prefers issued, then most recent). */
 export async function searchCertifierCredentialsByEmail(
   email: string
@@ -70,22 +87,23 @@ export async function searchCertifierCredentialsByEmail(
   const normalized = email.trim().toLowerCase();
   if (!normalized) return [];
 
-  const body = {
-    filter: {
-      recipient: {
-        email: { equals: normalized },
-      },
-    },
-    sort: { property: "createdAt", order: "desc" as const },
-    limit: 25,
-  };
-
-  const json = await certifierFetch<CertifierSearchResponse>("/credentials/search", {
+  let json = await certifierFetch<CertifierSearchResponse>("/credentials/search", {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify(searchBodyForEmail(normalized, "equals")),
   });
 
-  const rows = json.data ?? [];
+  let rows = json.data ?? [];
+  if (rows.length === 0) {
+    json = await certifierFetch<CertifierSearchResponse>("/credentials/search", {
+      method: "POST",
+      body: JSON.stringify(searchBodyForEmail(normalized, "contains")),
+    });
+    rows = json.data ?? [];
+    rows = rows.filter(
+      (r) => r.recipient?.email?.trim().toLowerCase() === normalized
+    );
+  }
+
   return rows
     .filter((r) => r.id && r.publicId)
     .map((r) => ({

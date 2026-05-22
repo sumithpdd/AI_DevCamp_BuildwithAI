@@ -18,6 +18,10 @@ import {
 const bodySchema = z
   .object({
     uids: z.array(z.string().min(1).max(128)).max(200).optional(),
+    /** Sync one user by email (any status) — for testing / manual link. */
+    email: z.string().email().max(320).optional(),
+    /** When true with no uids/email, sync all users with userStatus=certified (default). */
+    certifiedOnly: z.boolean().optional(),
   })
   .strict();
 
@@ -32,11 +36,23 @@ export async function POST(request: NextRequest) {
     const db = adminDb();
     let targets: DocumentSnapshot[] = [];
 
-    if (parsed.data.uids?.length) {
+    if (parsed.data.email) {
+      const email = parsed.data.email.trim().toLowerCase();
+      const byEmail = await db.collection("users").where("email", "==", email).get();
+      const uidDoc = byEmail.docs.find((d) => !d.id.includes("@"));
+      if (uidDoc) targets = [uidDoc];
+      else {
+        const emailDoc = await db.collection("users").doc(email).get();
+        if (emailDoc.exists) targets = [emailDoc];
+      }
+    } else if (parsed.data.uids?.length) {
       const snaps = await Promise.all(
         parsed.data.uids.map((uid) => db.collection("users").doc(uid).get())
       );
       targets = snaps.filter((s) => s.exists);
+    } else if (parsed.data.certifiedOnly === false) {
+      const q = await db.collection("users").where("role", "==", "attendee").get();
+      targets = q.docs.filter((d) => !d.id.includes("@"));
     } else {
       const q = await db
         .collection("users")

@@ -467,17 +467,23 @@ export type CertifierSyncResult = {
   failed: number;
 };
 
-/** Sync Certifier credential ids for certified users (admin API). */
-export async function syncCertifierCredentials(uids?: string[]): Promise<CertifierSyncResult> {
+/** Sync Certifier credential ids (admin API). */
+export async function syncCertifierCredentials(opts?: {
+  uids?: string[];
+  email?: string;
+}): Promise<CertifierSyncResult> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("Not signed in");
+  const body: { uids?: string[]; email?: string } = {};
+  if (opts?.uids?.length) body.uids = opts.uids;
+  if (opts?.email) body.email = opts.email;
   const res = await fetch("/api/admin/certifier/sync", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(uids?.length ? { uids } : {}),
+    body: JSON.stringify(body),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(String((json as { error?: string }).error ?? res.status));

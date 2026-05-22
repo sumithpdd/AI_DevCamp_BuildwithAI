@@ -303,7 +303,7 @@ export default function UserEditor({ user, onClose, onSave, onDeleteUser, adminC
             </div>
           </div>
 
-          {(userStatus === "certified" || user.certifierCredentialId) && (
+          {user.email && (
             <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4 space-y-3">
               <div className="flex items-center gap-2 text-emerald-300 font-mono text-xs uppercase tracking-wider">
                 <Award size={14} />
@@ -336,9 +336,9 @@ export default function UserEditor({ user, onClose, onSave, onDeleteUser, adminC
                     if (!user.uid) return;
                     setCertifierSyncing(true);
                     try {
-                      const r = await syncCertifierCredentials([user.uid]);
+                      const r = await syncCertifierCredentials({ uids: [user.uid] });
                       toast.success(`Certifier sync: ${r.synced} linked, ${r.missing} not found`);
-                      onClose();
+                      if (r.synced > 0) onClose();
                     } catch (e) {
                       toast.error(e instanceof Error ? e.message : "Sync failed");
                     } finally {

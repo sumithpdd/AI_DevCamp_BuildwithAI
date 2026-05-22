@@ -153,6 +153,8 @@ export default function AdminPage() {
   const [approveAllBusy, setApproveAllBusy] = useState(false);
   const [certifiedCompletionShowReadyOnly, setCertifiedCompletionShowReadyOnly] = useState(true);
   const [certifierBulkSyncBusy, setCertifierBulkSyncBusy] = useState(false);
+  const [certifierLookupEmail, setCertifierLookupEmail] = useState("");
+  const [certifierRowBusy, setCertifierRowBusy] = useState<string | null>(null);
 
   const [inactiveNeverAttended, setInactiveNeverAttended] = useState<NeverAttendedUserSummary[]>([]);
   const [inactiveArchived, setInactiveArchived] = useState<UserProfile[]>([]);
@@ -1642,8 +1644,44 @@ export default function AdminPage() {
                         ) : (
                           <Award size={12} />
                         )}
-                        Sync Certifier
+                        Sync certified
                       </button>
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="email"
+                          value={certifierLookupEmail}
+                          onChange={(e) => setCertifierLookupEmail(e.target.value)}
+                          placeholder="Lookup by email…"
+                          className="bg-gray-900 border border-white/15 rounded-lg px-2 py-1.5 text-[11px] text-white font-mono w-44"
+                        />
+                        <button
+                          type="button"
+                          disabled={!certifierLookupEmail.trim() || certifierBulkSyncBusy}
+                          onClick={async () => {
+                            setCertifierBulkSyncBusy(true);
+                            try {
+                              const r = await syncCertifierCredentials({
+                                email: certifierLookupEmail.trim(),
+                              });
+                              if (r.synced > 0) {
+                                toast.success(`Linked Certifier credential for ${certifierLookupEmail}`);
+                                setUsers(await fetchAllUsers());
+                              } else {
+                                toast.error(
+                                  `No credential in Certifier for ${certifierLookupEmail} (missing: ${r.missing})`
+                                );
+                              }
+                            } catch (e) {
+                              toast.error(e instanceof Error ? e.message : "Lookup failed");
+                            } finally {
+                              setCertifierBulkSyncBusy(false);
+                            }
+                          }}
+                          className="text-[11px] font-mono text-sky-300 border border-sky-500/30 px-2 py-1.5 rounded-lg hover:bg-sky-500/10 disabled:opacity-40"
+                        >
+                          Lookup email
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 text-[11px] font-mono mb-3">
@@ -1731,11 +1769,38 @@ export default function AdminPage() {
                                     href={certifierCredentialViewUrl(u.certifierCredentialPublicId)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-emerald-400 hover:text-emerald-300"
-                                    title="View certificate"
+                                    className="inline-flex items-center gap-1 text-emerald-400 hover:text-emerald-300 text-[10px] font-mono"
+                                    title="Open Certifier certificate"
                                   >
-                                    <Award size={14} className="inline" />
+                                    <Award size={12} />
+                                    Open
                                   </a>
+                                ) : u?.uid ? (
+                                  <button
+                                    type="button"
+                                    disabled={certifierRowBusy === r.uid}
+                                    onClick={async () => {
+                                      setCertifierRowBusy(r.uid);
+                                      try {
+                                        const res = await syncCertifierCredentials({ uids: [r.uid] });
+                                        if (res.synced > 0) {
+                                          toast.success(`Certifier linked for ${r.email}`);
+                                          setUsers(await fetchAllUsers());
+                                        } else {
+                                          toast.error(
+                                            `No credential in Certifier for ${r.email}. Create/issue it in Certifier first.`
+                                          );
+                                        }
+                                      } catch (e) {
+                                        toast.error(e instanceof Error ? e.message : "Lookup failed");
+                                      } finally {
+                                        setCertifierRowBusy(null);
+                                      }
+                                    }}
+                                    className="text-[10px] font-mono text-sky-300 hover:text-sky-200 disabled:opacity-40"
+                                  >
+                                    {certifierRowBusy === r.uid ? "…" : "Lookup"}
+                                  </button>
                                 ) : (
                                   <span className="text-gray-600">—</span>
                                 )}
