@@ -1,0 +1,16 @@
+﻿{
+    "description":  "Claude Code settings for AI DevCamp project",
+    "model":  "claude-opus-4-8",
+    "version":  "1",
+    "permissions":  {
+                        "bash":  [
+                                     "npm run dev",
+                                     "npm run build",
+                                     "npm run lint",
+                                     "npm run lint -- --fix",
+                                     "git status",
+                                     "git log",
+                                     "git diff"
+                                 ]
+                    }
+}

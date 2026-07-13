@@ -1,40 +1,62 @@
 # AI DevCamp 2026 — Build with AI · Developer Docs
 
-Welcome! This folder contains everything you need to understand and contribute to the project as a junior developer.
+Welcome! This folder contains everything you need to understand and contribute to the project.
 
-## Documents in this folder
+## 🚀 First Time Here?
+
+**Start here:** [00-quick-start.md](./00-quick-start.md) — 10-minute orientation + how to find answers
+
+Then read: [01-project-overview.md](./01-project-overview.md) + [CLAUDE.md](../CLAUDE.md)
+
+---
+
+## 📚 Complete Guide
 
 | File | What it covers |
 |------|----------------|
-| [01-project-overview.md](./01-project-overview.md) | What the app does, tech stack, key decisions |
-| [02-project-structure.md](./02-project-structure.md) | Every folder and file explained |
-| [03-database-schema.md](./03-database-schema.md) | Firestore collections, fields, and rules |
-| [04-auth-and-security.md](./04-auth-and-security.md) | How authentication and access control work |
-| [05-key-concepts.md](./05-key-concepts.md) | React patterns, hooks, context, services |
-| [06-getting-started.md](./06-getting-started.md) | How to run the project locally |
-| [07-api-routes.md](./07-api-routes.md) | REST API reference — endpoints, auth, request/response shapes |
-| [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md) | Production URL, env vars, Discord, admin features, `me` & pending-user APIs |
-| [09-learning-tasks-architecture.md](./09-learning-tasks-architecture.md) | Learning checklist (`/dashboard/tasks`), template catalogue, APIs, flows |
-| [10-customer-journey.md](./10-customer-journey.md) | Participant & organiser journeys, auth flows, sessions ↔ speakers diagrams |
+| **[00-quick-start.md](./00-quick-start.md)** | **New? Start here.** 10 min orientation + where to find answers |
+| [01-project-overview.md](./01-project-overview.md) | What the app does, tech stack, 3-layer architecture, key decisions |
+| [02-project-structure.md](./02-project-structure.md) | Every folder and file explained; where components, services, and pages live |
+| [03-database-schema.md](./03-database-schema.md) | Firestore collections, fields, relationships, and security rules |
+| [04-auth-and-security.md](./04-auth-and-security.md) | Authentication (Firebase), roles, access control, programme opt-out |
+| [05-key-concepts.md](./05-key-concepts.md) | React patterns used in this codebase (hooks, context, services, layers) |
+| [06-getting-started.md](./06-getting-started.md) | Local setup: Node, npm, `.env.local`, running the dev server |
+| [07-api-routes.md](./07-api-routes.md) | REST API reference — all endpoints, auth, request/response formats |
+| [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md) | Production deployment, environment variables, admin features, Vercel setup |
+| [09-learning-tasks-architecture.md](./09-learning-tasks-architecture.md) | Learning checklist (`/dashboard/tasks`), templates, APIs, user flows |
+| [10-customer-journey.md](./10-customer-journey.md) | User and organiser journeys, auth flows, visual diagrams |
 
-## Quick orientation
+---
+
+## 💡 Quick Reference
+
+**How to…**
+- **Add a new page?** → See `CLAUDE.md` “Adding a Page” + `02-project-structure.md`
+- **Add an API endpoint?** → See `CLAUDE.md` “Adding an API Route” + `07-api-routes.md`
+- **Add a React component?** → See `CLAUDE.md` “Adding a Component” + look at `src/components/`
+- **Deploy to production?** → See `08-site-deployment-and-admin.md`
+- **Understand the database?** → See `03-database-schema.md`
+- **Make my first change?** → See `00-quick-start.md` section 7
+
+---
+
+## 🎯 App Overview
 
 ```
 User visits site
-  └─ Browses sessions, speakers & mentors roster & curriculum (public); schedule + roster from Firestore (static fallback if empty)
-  └─ Registers → users/{uid} or pending users/{email} until first login merge
-  └─ Admin sets userStatus → participated / certified / …
+  └─ Browses sessions, speakers, curriculum (public)
+  └─ Registers → users/{uid} or pending users/{email}
+  └─ Admin sets userStatus → participated / certified / failed / …
   └─ Approved user: full session content, recordings, resources
-  └─ Optional: live self check-in on /sessions (code + window set in Session Editor)
-  └─ Assignments & projects submitted; admin reviews in /admin (assignment Approved, project Passed/Failed)
-  └─ Organiser exports certified users with completion columns; optional ready-only export from Admin → Users
-  └─ Signed-in user: optional private learning checklist /dashboard/tasks (imports from templates when empty)
-  └─ DevcampBuddies (/buddies): opt-in profilePublic, directory, buddy requests, accepted pairs — APIs only for buddy collections
-  └─ Programme leave → programOptOut (no app until admin restores)
-  └─ Admin “Inactive” archive → disabledUsers/{uid} (no users/{uid}; APIs → ACCOUNT_DISABLED until restore)
+  └─ Optional: live self check-in on /sessions (code-based)
+  └─ Assignments & projects: submit → admin reviews → Approved / Passed / Failed
+  └─ Dashboard: progress, learning tasks, attendance labels
+  └─ Admin tools: attendance grid, user management, exports, bulk email
+  └─ Programme leave: programOptOut (no access until admin restores)
+  └─ Admin “Inactive” archive: disabledUsers/{uid} (temporary disable)
 ```
 
-**Full feature table and architecture diagram:** [01 · Project overview](./01-project-overview.md).
+**Full feature table and architecture diagram:** [01 · Project overview](./01-project-overview.md)
 
 ## Recent changes (for returning contributors)
 
