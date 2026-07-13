@@ -415,3 +415,25 @@ export type LearningTaskCategory = string;
 export type LearningTaskPriority = "low" | "medium" | "high";
 
 export type LearningTaskProgress = "not_started" | "in_progress" | "done";
+
+/** Speaker call submission — stored in `speakerCallSubmissions/{cohortId}/submissions/{autoId}` */
+export interface SpeakerCallSubmission {
+  id?: string;
+  cohortId: string;
+  timestamp?: string;
+  speakerName: string;
+  speakerEmail: string;
+  speakerBio: string;
+  speakerPhotoUrl?: string;
+  linkedinUrl?: string;
+  twitterUrl?: string;
+  sessionTitle: string;
+  sessionDescription: string;
+  sessionTopic: string;
+  recordingLink?: string;
+  additionalNotes?: string;
+  sessionType: "talk" | "workshop" | "panel" | "other";
+  status: "submitted" | "under-review" | "accepted" | "rejected";
+  submittedAt: Date | string;
+  submittedAtClient?: string;
+}
