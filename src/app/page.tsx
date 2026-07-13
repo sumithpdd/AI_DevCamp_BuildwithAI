@@ -19,6 +19,7 @@ import {
   Zap,
   Cpu,
   ExternalLink,
+  Archive,
 } from "lucide-react";
 import { SESSIONS as STATIC_SESSIONS, CURRICULUM_WEEKS } from "@/data/sessions";
 import { SPEAKERS as STATIC_SPEAKERS } from "@/data/speakers";
@@ -127,13 +128,26 @@ export default function HomePage() {
 
         <div className="relative z-10 text-center w-full max-w-3xl mx-auto">
 
-          {/* Live badge */}
-          <div className="inline-flex items-center gap-2 font-mono text-sm bg-green-500/15 border border-green-500/50 rounded-full px-5 py-2 text-green-300 mb-8">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
-            </span>
-            REGISTRATIONS OPEN — 23 APRIL 2026
+          {/* Cohort Announcement Banner */}
+          <div className="inline-flex flex-col items-center gap-3 mb-8 w-full max-w-lg">
+            {/* Next Cohort Coming Soon */}
+            <div className="inline-flex items-center gap-2 font-mono text-sm bg-blue-500/15 border border-blue-500/50 rounded-full px-5 py-2 text-blue-300 animate-pulse">
+              <Calendar size={16} className="text-blue-400" />
+              NEXT COHORT: 3 SEPTEMBER 2026 (Thu) · 1 HR
+            </div>
+
+            {/* Call for Speakers & Mentors */}
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/call-for-speakers" className="inline-flex items-center gap-2 font-mono text-sm bg-purple-500/15 border border-purple-500/50 hover:border-purple-500 hover:bg-purple-500/25 rounded-full px-5 py-2 text-purple-300 transition-all">
+                <Cpu size={16} className="text-purple-400" />
+                📢 CALL FOR SPEAKERS & MENTORS
+              </Link>
+
+              <Link href="/past-cohorts" className="inline-flex items-center gap-2 font-mono text-sm bg-amber-500/15 border border-amber-500/50 hover:border-amber-500 hover:bg-amber-500/25 rounded-full px-5 py-2 text-amber-300 transition-all">
+                <Archive size={16} className="text-amber-400" />
+                📚 VIEW PAST COHORTS
+              </Link>
+            </div>
           </div>
 
           {/* Logo — large */}
@@ -171,32 +185,40 @@ export default function HomePage() {
             <div className="px-5 py-4 font-mono text-base space-y-1.5">
               <p className="text-gray-300">
                 <span className="text-green-400">$</span>
-                <span className="ml-2">cat about.txt</span>
+                <span className="ml-2">cat cohorts.txt</span>
+              </p>
+              <p className="text-gray-300 pl-4">
+                <span className="text-green-400">→</span>{" "}
+                🚀 <span className="text-blue-400 font-bold">September 2026:</span> NEW COHORT COMING
+              </p>
+              <p className="text-gray-300 pl-4">
+                <span className="text-green-400">→</span>{" "}
+                📅 <span className="text-amber-300">Past Cohorts:</span> June 2026 ✅ View & Explore
               </p>
               <p className="text-gray-300 pl-4">
                 <span className="text-green-400">→</span>{" "}
                 4-week beginner AI program · <span className="text-white font-bold">GDG London</span>
               </p>
-              <p className="text-gray-300 pl-4">
-                <span className="text-green-400">→</span>{" "}
-                AI Agents · MCP · Google ADK · Real Projects
-              </p>
               <p className="text-gray-400 pl-4">
                 <span className="text-emerald-400">→</span>{" "}
-                No prior AI experience required
+                AI Agents · MCP · Google ADK · Real Projects
               </p>
             </div>
           </div>
 
-          {/* Location pills */}
+          {/* Cohort Info Pills */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-10 font-mono text-sm">
-            <span className="flex items-center gap-2 bg-gray-800 border border-gray-600 text-gray-200 px-4 py-2 rounded-full">
-              <Calendar size={16} className="text-green-400" />
-              23 Apr – 19 May 2026
+            <span className="flex items-center gap-2 bg-blue-900/40 border border-blue-500/50 text-blue-100 px-4 py-2 rounded-full">
+              <Calendar size={16} className="text-blue-400" />
+              Sept 3 – Oct 1, 2026 (Coming Soon)
+            </span>
+            <span className="flex items-center gap-2 bg-amber-900/40 border border-amber-500/50 text-amber-100 px-4 py-2 rounded-full">
+              <Archive size={16} className="text-amber-400" />
+              June 2026 (Past Cohort Available)
             </span>
             <span className="flex items-center gap-2 bg-gray-800 border border-gray-600 text-gray-200 px-4 py-2 rounded-full">
               <MapPin size={16} className="text-green-400" />
-              Skyscanner, London
+              Online & In-Person
             </span>
             <span className="flex items-center gap-2 bg-gray-800 border border-gray-600 text-gray-200 px-4 py-2 rounded-full">
               <Clock size={16} className="text-green-400" />
