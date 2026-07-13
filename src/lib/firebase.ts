@@ -79,6 +79,7 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
@@ -86,4 +87,9 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 export const auth = getOrInitAuth();
 export const db = getOrInitFirestore();
 export const storage = getStorage(app);
+
+// Google Analytics & Performance Monitoring are initialised lazily, ONLY after
+// the user grants cookie consent — see `src/lib/analytics.ts`. They are not
+// started here so that no analytics cookies are set before consent.
+
 export default app;

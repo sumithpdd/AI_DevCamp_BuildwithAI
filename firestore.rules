@@ -185,5 +185,24 @@ service cloud.firestore {
     match /buddyPairs/{pairId} {
       allow read, write: if false;
     }
+
+    // ── Cohorts — read/written only via /api/cohorts (Admin SDK). No client access. ──
+    match /cohorts/{cohortId} {
+      allow read, write: if false;
+    }
+
+    // ── Speaker call submissions — written by /api/speaker-call (Admin SDK). ──
+    // Public form input; never client-readable (contains submitter email).
+    match /speakerCallSubmissions/{document=**} {
+      allow read, write: if false;
+    }
+
+    // ── Default deny ─────────────────────────────────────────────────────────
+    // Any collection not matched above is server-only (Admin SDK) by default.
+    // Explicit catch-all documents intent; add a specific match before granting
+    // any client access to a new collection.
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }

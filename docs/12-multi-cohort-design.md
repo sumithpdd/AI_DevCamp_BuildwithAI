@@ -1,5 +1,22 @@
 # Multi-Cohort Architecture Design
 
+> **Status: DESIGN PROPOSAL (partially implemented).** This document is the
+> original design spec for a fully cohort-scoped database. It is **aspirational**
+> and does **not** match the shipped schema in all respects — the live app still
+> uses flat top-level collections (`sessions`, `attendance`, `assignments`,
+> `projects`) and a single `users/{uid}.role` field, and `firestore.rules`
+> enforces that flat model. What *has* shipped is the `cohorts/` metadata
+> collection, `/api/cohorts/*`, and the cohort browsing pages.
+>
+> **Source of truth for current state:** the code, `firestore.rules`, and
+> [11-cohort-architecture.md](./11-cohort-architecture.md). Treat any
+> `cohortSessions/`, `cohortAttendance/`, `platformRole`, or per-cohort-rules
+> content below as a proposal, not current behaviour.
+>
+> This file consolidates the former root-level `MULTI_COHORT_ARCHITECTURE.md`,
+> `COHORT_DATA_MODEL.md`, and `MIGRATION_IMPLEMENTATION_GUIDE.md`. The migration
+> runbook and troubleshooting notes are appended at the end.
+
 ## Overview
 
 Restructure the database to support multiple cohorts (programmes), allowing:
@@ -970,6 +987,46 @@ See main docs:
 
 ---
 
-**Version:** 1.0  
-**Date:** July 2026  
-**Status:** Ready for implementation review
+## 🚚 Migration Runbook (from the former MIGRATION_IMPLEMENTATION_GUIDE)
+
+Practical steps for running `scripts/migrate-to-cohorts.ts` toward the design above.
+
+### Run the migration
+
+```bash
+# 1. Dry run — no writes, prints a summary of what would change
+npm run migrate-to-cohorts -- --cohort=cohort-june-2026 --dry-run
+
+# 2. Verify the printed counts match expectations, then apply
+npm run migrate-to-cohorts -- --cohort=cohort-june-2026 --confirm
+```
+
+The migration is **idempotent** and does **not** delete the old flat
+collections — they remain as a backup until you remove them manually in the
+Firebase Console once verified.
+
+### Verification checklist
+
+- [ ] Dry run completed and counts look right
+- [ ] Actual migration completed without errors
+- [ ] `cohorts/{cohortId}` metadata document exists
+- [ ] Sample user has a `cohortParticipation` entry
+- [ ] `firestore.rules` updated **and deployed** (`firebase deploy --only firestore:rules`)
+- [ ] Cohort browsing pages (`/past-cohorts`, `/cohort/[cohortId]`) render the data
+- [ ] Old flat collections verified before any deletion
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| `Missing or insufficient permissions` | Ensure `.env.local` has valid `FIREBASE_ADMIN_*` credentials with Firestore access. |
+| Cohort subcollection empty after run | Confirm the source flat collection still has documents; re-run the dry run. |
+| Some users missing `cohortParticipation` | Migration skipped them on error; it's idempotent — re-run. |
+| Old flat collections still present | Expected — the migration never deletes them. Remove manually once verified. |
+
+For the operational June→September reset and admin workflows (current flat
+model), see [13-firebase-operations.md](./13-firebase-operations.md).
+
+---
+
+**Version:** 1.0 · **Date:** July 2026 · **Status:** Design proposal (see banner at top)

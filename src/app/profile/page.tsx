@@ -32,6 +32,7 @@ import ProfileCompletion from "@/components/ui/ProfileCompletion";
 import ProfileCertificate from "@/components/ProfileCertificate";
 import toast from "react-hot-toast";
 import { unknownErrorMessage } from "@/lib/unknownErrorMessage";
+import { logAnalyticsEvent } from "@/lib/analytics";
 
 export default function ProfilePage() {
   const { user, userProfile, loading, refreshProfile } = useAuth();
@@ -117,6 +118,9 @@ export default function ProfilePage() {
         stripUndefinedForFirestoreClient(updatePayload)
       );
       await refreshProfile();
+      logAnalyticsEvent("profile_updated", {
+        experience_level: form.experienceLevel,
+      });
       toast.success("Profile updated!");
     } catch (err) {
       console.error("Profile save failed:", err);

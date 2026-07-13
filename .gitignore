@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Firebase — rules and config ARE tracked in git (no secrets in these files)
 # .firebaserc, firestore.rules, storage.rules are intentionally committed
+# Firebase service account keys (NEVER commit these!)
+.config/firebase/*.json
+*.serviceaccount.json

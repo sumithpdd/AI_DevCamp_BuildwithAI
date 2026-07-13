@@ -11,7 +11,22 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
-    // All other paths: deny by default.
+    // Speaker roster photos — written only by the Admin SDK
+    // (scripts/upload-speaker-photos.ts). Served to clients via signed download
+    // tokens (getDownloadURL-style URLs), which bypass these rules, so no direct
+    // client read/write is granted here.
+    match /speakers/{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Call-for-speakers photo uploads — written only by the Admin SDK
+    // (/api/speaker-call/upload-photo, which validates type + size server-side).
+    // Private; served to organisers via download token only.
+    match /speaker-submissions/{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // All other paths: deny by default (server-only via Admin SDK).
     match /{allPaths=**} {
       allow read, write: if false;
     }

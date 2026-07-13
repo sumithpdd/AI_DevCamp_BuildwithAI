@@ -5,6 +5,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Navbar from "@/components/Navbar";
 import AuthenticatedMain from "@/components/AuthenticatedMain";
 import ClientErrorRoot from "@/components/ClientErrorRoot";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
 import { Toaster } from "react-hot-toast";
 
 const poppins = Poppins({
@@ -42,10 +44,12 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <body className="bg-gray-950 text-white font-poppins antialiased">
         <AuthProvider>
+          <AnalyticsTracker />
           <ClientErrorRoot>
             <Navbar />
             <AuthenticatedMain>{children}</AuthenticatedMain>
           </ClientErrorRoot>
+          <CookieConsentBanner />
           <Toaster
             position="top-right"
             gutter={12}

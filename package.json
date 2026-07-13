@@ -11,8 +11,14 @@
     "backfill-registration-map-coords": "tsx --env-file=.env.local scripts/backfill-registration-map-coords.ts",
     "generate-favicons": "tsx scripts/generate-favicons.ts",
     "sync-firestore-programme": "tsx --env-file=.env.local scripts/sync-firestore-programme.ts",
+    "upload-speaker-photos": "tsx --env-file=.env.local scripts/upload-speaker-photos.ts",
     "delete-legacy-speaker-docs": "tsx --env-file=.env.local scripts/delete-legacy-speaker-docs.ts",
-    "migrate-to-cohorts": "tsx --env-file=.env.local scripts/migrate-to-cohorts.ts"
+    "migrate-to-cohorts": "tsx --env-file=.env.local scripts/migrate-to-cohorts.ts",
+    "migrate:june:dry": "cross-env COHORT_ID=cohort-june-2026 DRY_RUN=true npm run migrate-to-cohorts",
+    "migrate:june:confirm": "cross-env COHORT_ID=cohort-june-2026 CONFIRM=true npm run migrate-to-cohorts",
+    "migrate:sept:dry": "cross-env COHORT_ID=cohort-september-2026 DRY_RUN=true npm run migrate-to-cohorts",
+    "migrate:sept:confirm": "cross-env COHORT_ID=cohort-september-2026 CONFIRM=true npm run migrate-to-cohorts",
+    "seed-cohorts": "tsx --env-file=.env.local scripts/seed-cohorts.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
@@ -42,6 +48,7 @@
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "sharp": "^0.34.5",

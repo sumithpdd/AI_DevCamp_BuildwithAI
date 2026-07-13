@@ -16,6 +16,8 @@
 import { getApps, initializeApp, cert, App } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { getAuth, Auth } from "firebase-admin/auth";
+import { getStorage } from "firebase-admin/storage";
+import type { Bucket } from "@google-cloud/storage";
 
 function getAdminApp(): App {
   if (getApps().length > 0) return getApps()[0];
@@ -44,4 +46,25 @@ export function adminDb(): Firestore {
 
 export function adminAuth(): Auth {
   return getAuth(getAdminApp());
+}
+
+/**
+ * Default Storage bucket for the admin app.
+ * The app is initialised without a `storageBucket`, so the bucket name is
+ * resolved from env (server-side `FIREBASE_STORAGE_BUCKET` or the shared
+ * `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`) and passed explicitly.
+ */
+export function adminStorageBucket(): Bucket {
+  const bucketName =
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
+  if (!bucketName) {
+    throw new Error(
+      "Missing storage bucket env. Set FIREBASE_STORAGE_BUCKET or " +
+      "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET (e.g. your-project.firebasestorage.app)."
+    );
+  }
+
+  return getStorage(getAdminApp()).bucket(bucketName);
 }

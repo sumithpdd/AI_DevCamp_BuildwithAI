@@ -1,4 +1,5 @@
 import { auth } from "./firebase";
+import { logAppException } from "./analytics";
 
 export type ClientErrorPayload = {
   message: string;
@@ -30,6 +31,12 @@ export async function reportClientError(
   ) {
     return;
   }
+  // Mirror to Google Analytics as an `exception` event (behaviour + stability
+  // in one place). Full stack traces still go to `error_logs` below.
+  logAppException(
+    `[${payload.source}] ${payload.name ? payload.name + ": " : ""}${payload.message}`,
+    payload.source === "react"
+  );
   try {
     const token = auth.currentUser ? await auth.currentUser.getIdToken() : undefined;
     const headers: Record<string, string> = { "Content-Type": "application/json" };

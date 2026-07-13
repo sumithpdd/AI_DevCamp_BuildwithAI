@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import Button from "@/components/ui/Button";
+import SkillsSelector from "@/components/ui/SkillsSelector";
+import { SKILL_TAGS, EXPERTISE_TAGS } from "@/data/tags";
+import { logAnalyticsEvent } from "@/lib/analytics";
 
 type SessionType = "talk" | "workshop" | "panel" | "other";
+type ExperienceLevel = "beginner" | "intermediate" | "advanced";
 
 interface FormData {
   cohortId: string;
@@ -21,6 +25,9 @@ interface FormData {
   recordingLink: string;
   additionalNotes: string;
   sessionType: SessionType;
+  experienceLevel: ExperienceLevel;
+  skills: string[];
+  expertise: string[];
 }
 
 const INITIAL_FORM: FormData = {
@@ -37,11 +44,15 @@ const INITIAL_FORM: FormData = {
   recordingLink: "",
   additionalNotes: "",
   sessionType: "talk",
+  experienceLevel: "beginner",
+  skills: [],
+  expertise: [],
 };
 
 export default function CallForSpeakersPage() {
   const [form, setForm] = useState<FormData>(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submissionId, setSubmissionId] = useState("");
 
@@ -63,14 +74,40 @@ export default function CallForSpeakersPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // For now, we'll just store the filename
-    // In production, upload to Firebase Storage and get the URL
-    setForm((prev) => ({
-      ...prev,
-      speakerPhotoUrl: file.name,
-    }));
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file (JPG, PNG).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image is too large (max 5MB).");
+      return;
+    }
 
-    toast.success("Photo ready to upload (will be processed on submission)");
+    // Upload to Firebase Storage via the server and keep the returned URL.
+    setPhotoUploading(true);
+    try {
+      const data = new FormData();
+      data.append("file", file);
+
+      const response = await fetch("/api/speaker-call/upload-photo", {
+        method: "POST",
+        body: data,
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        toast.error(result.error || "Failed to upload photo");
+        return;
+      }
+
+      setForm((prev) => ({ ...prev, speakerPhotoUrl: result.url }));
+      toast.success("Photo uploaded");
+    } catch (error) {
+      console.error("Photo upload error:", error);
+      toast.error("Failed to upload photo");
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -103,6 +140,10 @@ export default function CallForSpeakersPage() {
 
       setSubmitted(true);
       setSubmissionId(data.submissionId);
+      logAnalyticsEvent("speaker_call_submitted", {
+        cohortId: form.cohortId,
+        sessionType: form.sessionType,
+      });
       toast.success(data.message);
 
       // Reset form after 3 seconds
@@ -134,7 +175,7 @@ export default function CallForSpeakersPage() {
               Submission ID: <code className="bg-gray-100 px-2 py-1 rounded">{submissionId}</code>
             </p>
             <p className="text-gray-700 mb-8">
-              We'll review your submission and get back to you within 5-7 business days.
+              We&apos;ll review your submission and get back to you within 5-7 business days.
             </p>
             <Button
               onClick={() => {
@@ -159,7 +200,7 @@ export default function CallForSpeakersPage() {
             Call for Speakers
           </h1>
           <p className="text-xl text-gray-700">
-            Are you an expert in AI, agents, or related technologies? We'd love to have you speak at AI DevCamp!
+            Are you an expert in AI, agents, or related technologies? We&apos;d love to have you speak at AI DevCamp!
           </p>
         </div>
 
@@ -227,9 +268,20 @@ export default function CallForSpeakersPage() {
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoUpload}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                  disabled={photoUploading}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg disabled:opacity-60"
                 />
-                <p className="text-xs text-gray-500 mt-1">JPG, PNG, max 5MB</p>
+                {photoUploading ? (
+                  <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Uploading…
+                  </p>
+                ) : form.speakerPhotoUrl ? (
+                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Photo uploaded
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">JPG, PNG, max 5MB</p>
+                )}
               </div>
 
               <div>
@@ -363,6 +415,62 @@ export default function CallForSpeakersPage() {
             </div>
           </section>
 
+          {/* Experience & Skills */}
+          <section className="mb-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Experience &amp; Skills
+            </h2>
+
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Experience Level
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["beginner", "intermediate", "advanced"] as const).map(
+                  (level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() =>
+                        setForm((prev) => ({ ...prev, experienceLevel: level }))
+                      }
+                      className={`py-2.5 rounded-lg text-sm font-semibold border capitalize transition-all ${
+                        form.experienceLevel === level
+                          ? "bg-green-600 border-green-500 text-white"
+                          : "border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-900"
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+
+            {/* Skills & Expertise — shared dark-themed selector, wrapped in a dark panel */}
+            <div className="space-y-5 bg-gray-900 border border-gray-800 rounded-xl p-5">
+              <p className="text-sm font-semibold text-white">Skills &amp; Expertise</p>
+
+              <SkillsSelector
+                label="My programming skills"
+                selected={form.skills}
+                onChange={(v) => setForm((prev) => ({ ...prev, skills: v }))}
+                presets={SKILL_TAGS}
+                color="purple"
+              />
+
+              <div className="border-t border-white/8 pt-5">
+                <SkillsSelector
+                  label="My domain expertise"
+                  selected={form.expertise}
+                  onChange={(v) => setForm((prev) => ({ ...prev, expertise: v }))}
+                  presets={EXPERTISE_TAGS}
+                  color="orange"
+                />
+              </div>
+            </div>
+          </section>
+
           {/* Hidden fields */}
           <input type="hidden" name="cohortId" value={form.cohortId} />
 
@@ -370,7 +478,7 @@ export default function CallForSpeakersPage() {
           <div className="flex gap-4">
             <Button
               type="submit"
-              disabled={loading}
+              disabled={loading || photoUploading}
               className="flex-1 flex items-center justify-center gap-2"
             >
               {loading ? (
@@ -388,13 +496,13 @@ export default function CallForSpeakersPage() {
           </div>
 
           <p className="text-sm text-gray-500 text-center mt-6">
-            We'll review your submission and get back to you within 5-7 business days.
+            We&apos;ll review your submission and get back to you within 5-7 business days.
           </p>
         </form>
 
         {/* Info Box */}
         <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="font-semibold text-blue-900 mb-2">What We're Looking For</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">What We&apos;re Looking For</h3>
           <ul className="text-sm text-blue-800 space-y-2">
             <li>✨ Expertise in AI, machine learning, agents, or related technologies</li>
             <li>✨ Engaging speakers who can explain complex topics clearly</li>

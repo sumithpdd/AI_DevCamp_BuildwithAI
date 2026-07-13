@@ -16,10 +16,15 @@ async function main() {
   const now = new Date().toISOString();
 
   for (const s of SPEAKERS) {
+    // Never overwrite `photo`: live roster photos are Firebase Storage URLs
+    // written by `scripts/upload-speaker-photos.ts`. The source `photo` here is
+    // a local /public path, so merging it would re-break the roster images.
+    const speakerFields: Record<string, unknown> = { ...s };
+    delete speakerFields.photo;
     await db
       .collection("speakers")
       .doc(s.id)
-      .set({ ...s, updatedAt: now }, { merge: true });
+      .set({ ...speakerFields, updatedAt: now }, { merge: true });
   }
 
   for (const sess of SESSIONS) {

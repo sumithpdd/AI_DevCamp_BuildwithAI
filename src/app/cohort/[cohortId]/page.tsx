@@ -12,15 +12,6 @@ import {
   Loader2,
   FileText,
 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  orderBy,
-} from "firebase/firestore";
 import type { Session, Speaker } from "@/types";
 
 interface CohortDetails {
@@ -59,66 +50,44 @@ export default function CohortDetailsPage() {
   useEffect(() => {
     async function loadCohortData() {
       try {
-        // Load cohort details
-        const cohortDoc = await getDoc(doc(db, "cohorts", cohortId));
-        if (!cohortDoc.exists()) {
+        const response = await fetch(`/api/cohorts/${cohortId}`);
+
+        if (!response.ok) {
           setError("Cohort not found");
           setLoading(false);
           return;
         }
 
-        const cohortData = cohortDoc.data();
+        const data = await response.json();
+
+        if (!data.success) {
+          setError("Failed to load cohort data");
+          setLoading(false);
+          return;
+        }
+
+        const cohortData = data.cohort;
         setCohort({
           cohortId,
           name: cohortData.name || cohortId,
           displayName: cohortData.displayName || cohortData.name || cohortId,
           status: cohortData.status || "active",
           startDate:
-            cohortData.startDate?.toDate?.()?.toLocaleDateString?.() ||
-            String(cohortData.startDate),
+            cohortData.startDate instanceof Date
+              ? cohortData.startDate.toLocaleDateString()
+              : new Date(cohortData.startDate).toLocaleDateString(),
           endDate:
-            cohortData.endDate?.toDate?.()?.toLocaleDateString?.() ||
-            String(cohortData.endDate),
+            cohortData.endDate instanceof Date
+              ? cohortData.endDate.toLocaleDateString()
+              : new Date(cohortData.endDate).toLocaleDateString(),
           numberOfSessions: cohortData.numberOfSessions || 4,
           description: cohortData.description,
-          stats: cohortData.stats,
+          stats: cohortData.stats || {},
         });
 
-        // Load sessions for this cohort
-        const sessionsQuery = query(
-          collection(db, "cohortSessions", cohortId, "sessions"),
-          orderBy("number", "asc")
-        );
-        const sessionsSnapshot = await getDocs(sessionsQuery);
-        const sessionsData: CohortSession[] = [];
-
-        sessionsSnapshot.forEach((doc) => {
-          const data = doc.data();
-          sessionsData.push({
-            ...data,
-            cohortId,
-            id: doc.id,
-          } as CohortSession);
-        });
-
-        setSessions(sessionsData);
-
-        // Load all speakers (global collection)
-        const speakersQuery = query(
-          collection(db, "speakers"),
-          orderBy("sortOrder", "asc")
-        );
-        const speakersSnapshot = await getDocs(speakersQuery);
-        const speakersData: Speaker[] = [];
-
-        speakersSnapshot.forEach((doc) => {
-          speakersData.push({
-            ...doc.data(),
-            id: doc.id,
-          } as Speaker);
-        });
-
-        setSpeakers(speakersData);
+        // Set sessions and speakers from API response
+        setSessions(data.sessions || []);
+        setSpeakers(data.speakers || []);
       } catch (err) {
         console.error("Error loading cohort data:", err);
         setError("Failed to load cohort data");
@@ -312,18 +281,26 @@ export default function CohortDetailsPage() {
                           const speaker = speakers.find(
                             (s) => s.id === speakerId
                           );
-                          return speaker ? (
+                          if (!speaker) return null;
+
+                          // Generate avatar URL if photo not available
+                          const avatarUrl = speaker.photo ||
+                            `https://ui-avatars.com/api/name=${encodeURIComponent(speaker.name)}&background=0D8ABC&color=fff&bold=true&size=64`;
+
+                          return (
                             <div
                               key={speakerId}
                               className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded"
                             >
-                              {speaker.photo && (
-                                <img
-                                  src={speaker.photo}
-                                  alt={speaker.name}
-                                  className="w-6 h-6 rounded-full"
-                                />
-                              )}
+                              <img
+                                src={avatarUrl}
+                                alt={speaker.name}
+                                className="w-6 h-6 rounded-full object-cover"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLImageElement).src =
+                                    `https://ui-avatars.com/api/name=${encodeURIComponent(speaker.name)}&background=0D8ABC&color=fff&bold=true&size=64`;
+                                }}
+                              />
                               <div>
                                 <p className="text-white text-sm font-medium">
                                   {speaker.name}
@@ -333,7 +310,7 @@ export default function CohortDetailsPage() {
                                 </p>
                               </div>
                             </div>
-                          ) : null;
+                          );
                         })}
                       </div>
                     </div>
@@ -352,37 +329,44 @@ export default function CohortDetailsPage() {
         {activeTab === "speakers" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {cohortSpeakers.length > 0 ? (
-              cohortSpeakers.map((speaker) => (
-                <div
-                  key={speaker.id}
-                  className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:bg-slate-800/70 transition"
-                >
-                  {speaker.photo && (
+              cohortSpeakers.map((speaker) => {
+                const avatarUrl = speaker.photo ||
+                  `https://ui-avatars.com/api/name=${encodeURIComponent(speaker.name)}&background=0D8ABC&color=fff&bold=true&size=400`;
+
+                return (
+                  <div
+                    key={speaker.id}
+                    className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:bg-slate-800/70 transition"
+                  >
                     <img
-                      src={speaker.photo}
+                      src={avatarUrl}
                       alt={speaker.name}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-full h-48 object-cover rounded-lg mb-4 bg-slate-700"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          `https://ui-avatars.com/api/name=${encodeURIComponent(speaker.name)}&background=0D8ABC&color=fff&bold=true&size=400`;
+                      }}
                     />
-                  )}
-                  <h3 className="text-lg font-bold text-white mb-2">
-                    {speaker.name}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">{speaker.title}</p>
-                  <div className="flex gap-3">
-                    {speaker.linkedinUrl && (
-                      <a
-                        href={speaker.linkedinUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
-                        title="LinkedIn"
-                      >
-                        in
-                      </a>
-                    )}
+                    <h3 className="text-lg font-bold text-white mb-2">
+                      {speaker.name}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-4">{speaker.title}</p>
+                    <div className="flex gap-3">
+                      {speaker.linkedinUrl && (
+                        <a
+                          href={speaker.linkedinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded transition"
+                          title="LinkedIn"
+                        >
+                          in
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-12 bg-slate-800/50 border border-slate-700 rounded-lg">
                 <p className="text-gray-400">No speakers found for this cohort</p>

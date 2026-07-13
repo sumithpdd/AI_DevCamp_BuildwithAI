@@ -191,6 +191,32 @@ npm run dev              # Verify locally (http://localhost:3000)
 - **Buddy data:** Never read `buddyRequests` or `buddyPairs` client-side; use `/api/buddies/*` only
 - **Programme opt-out:** `programOptOut` blocks all API access; check in handlers
 
+### Security Model (must-follow — run `/firebase-security` for the full checklist when touching Firebase)
+
+**Two enforcement boundaries. Every Firebase operation crosses exactly one:**
+
+1. **Client (Web SDK)** → enforced by `firestore.rules` / `storage.rules`. Rules are the *only* thing standing between a browser and the data. The client is untrusted.
+2. **Server (`/api/*` + Admin SDK)** → Admin SDK **bypasses all rules**. Enforcement is your code: call `verifyAuth()` / `requireAdmin()` / `requireAdminOrSelf()` from `src/lib/api-helpers.ts` at the top of *every* handler that reads or writes privileged data.
+
+**Firestore rules (`firestore.rules`):**
+- **Default deny.** Unmatched paths are denied; there is an explicit catch-all `match /{document=**} { allow read, write: if false; }`. A new collection is server-only until you add a specific `match` granting client access — and you must justify every `allow`.
+- **Server-only collections** (Admin SDK exclusively, `allow read, write: if false`): `error_logs`, `activity_events`, `buddyRequests`, `buddyPairs`, `disabledUsers`, `cohorts`, `speakerCallSubmissions`, `session_self_checkin` (mod/admin only).
+- **Privileged user fields** (`role`, `userStatus`, `accountDisabled`, `programOptOut`, buddy/certifier fields) are blocked from self-update by `touchesPrivilegedFields()` / `touchesServerMaintainedUserFields()`. Never let a client set its own role/status.
+- Owner-scoped collections (`assignments`, `projects`, `learningTasks`) check `resource.data.userId == request.auth.uid` and forbid changing `userId`/`status` client-side.
+
+**Storage rules (`storage.rules`):**
+- **Default deny.** Only `avatars/{userId}` allows client writes (owner-only, image, <5MB).
+- `speakers/` and `speaker-submissions/` are **Admin-SDK-write-only**. Images are served via Firebase **download-token URLs** (`getDownloadURL()`-style, `?alt=media&token=…`), which are authorised by the token and bypass rules — so we never open public read. Generate these server-side with `uploadImageToStorage()` (`src/lib/server/uploadImage.ts`).
+- **Never** add an anonymous/authenticated client-write path without an owner check + size + content-type constraints.
+
+**When adding anything that touches Firebase, you MUST:**
+1. Decide the boundary (client-with-rules vs server-with-Admin-SDK) and enforce it — never rely on UI-only checks.
+2. If client-readable/writable, add/adjust the `match` in `firestore.rules` / `storage.rules` with least privilege, and re-read the surrounding rules.
+3. If server-side, verify auth (`verifyAuth`/`requireAdmin`/`requireAdminOrSelf`) before any privileged read/write, and validate input (Zod).
+4. Keep sensitive data (emails, codes, tokens, roles) off world-readable docs.
+5. Public/unauthenticated endpoints (e.g. `/api/speaker-call*`) must validate + bound all input (type, size, length) since there is no caller identity.
+6. After changing `.rules`, deploy them (`firebase deploy --only firestore:rules,storage`) — editing the file alone changes nothing in production.
+
 ---
 
 ## Next.js Specifics

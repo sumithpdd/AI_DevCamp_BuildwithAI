@@ -1,4 +1,10 @@
-# Firebase Migration Guide — September 2026 DevCamp
+# Firebase Operations & Migration Runbook
+
+> **This is the current-state operations runbook** for the live app (flat
+> collections, single `users/{uid}.role`). It covers the June→September reset,
+> admin workflows, certification, and CLI commands. For the *proposed*
+> cohort-scoped redesign and its migration script, see
+> [12-multi-cohort-design.md](./12-multi-cohort-design.md).
 
 ## 🔗 Firebase Project Details
 

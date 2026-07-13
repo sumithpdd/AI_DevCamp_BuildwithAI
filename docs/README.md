@@ -25,6 +25,9 @@ Then read: [01-project-overview.md](./01-project-overview.md) + [CLAUDE.md](../C
 | [08-site-deployment-and-admin.md](./08-site-deployment-and-admin.md) | Production deployment, environment variables, admin features, Vercel setup |
 | [09-learning-tasks-architecture.md](./09-learning-tasks-architecture.md) | Learning checklist (`/dashboard/tasks`), templates, APIs, user flows |
 | [10-customer-journey.md](./10-customer-journey.md) | User and organiser journeys, auth flows, visual diagrams |
+| [11-cohort-architecture.md](./11-cohort-architecture.md) | Current cohort-scoped data structure (cohorts metadata, browsing pages) |
+| [12-multi-cohort-design.md](./12-multi-cohort-design.md) | **Design proposal** for a fully cohort-scoped DB + migration runbook (aspirational — see banner) |
+| [13-firebase-operations.md](./13-firebase-operations.md) | Current-state Firebase ops runbook: June→September reset, admin workflows, certification, CLI |
 
 ---
 

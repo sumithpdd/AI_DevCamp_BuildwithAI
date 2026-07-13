@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { Calendar, Users, Archive, ArrowRight } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import type { Firestore } from "firebase/firestore";
 
 interface CohortData {
   cohortId: string;
@@ -22,40 +19,80 @@ interface CohortData {
   };
 }
 
+const CACHE_KEY = "past-cohorts-cache";
+const CACHE_DURATION = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
+
 export default function PastCohortsPage() {
   const [cohorts, setCohorts] = useState<CohortData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const cacheRef = useRef<{ data: CohortData[]; timestamp: number } | null>(null);
 
   useEffect(() => {
     async function loadCohorts() {
       try {
-        const cohortsQuery = query(
-          collection(db, "cohorts"),
-          orderBy("startDate", "desc")
-        );
+        // Check if we have valid cached data
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          const age = Date.now() - parsed.timestamp;
 
-        const snapshot = await getDocs(cohortsQuery);
-        const cohortsData: CohortData[] = [];
+          if (age < CACHE_DURATION) {
+            console.log("[past-cohorts] Using cached data");
+            setCohorts(parsed.data);
+            setLoading(false);
+            cacheRef.current = parsed;
+            return;
+          }
+        }
 
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          cohortsData.push({
-            cohortId: doc.id,
-            name: data.name || doc.id,
-            displayName: data.displayName || data.name || doc.id,
-            status: data.status || "active",
-            startDate: data.startDate?.toDate?.()?.toLocaleDateString?.() || String(data.startDate),
-            endDate: data.endDate?.toDate?.()?.toLocaleDateString?.() || String(data.endDate),
-            numberOfSessions: data.numberOfSessions || 4,
-            stats: data.stats || {},
-          });
+        console.log("[past-cohorts] Fetching /api/cohorts...");
+        const response = await fetch("/api/cohorts", {
+          // Add cache headers for browser caching
+          headers: {
+            "Cache-Control": "public, max-age=3600",
+          },
         });
 
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !data.cohorts || !Array.isArray(data.cohorts)) {
+          throw new Error("Invalid response format");
+        }
+
+        // Format dates from API
+        const cohortsData: CohortData[] = data.cohorts.map((cohort: any) => ({
+          cohortId: cohort.cohortId,
+          name: cohort.name || cohort.cohortId,
+          displayName: cohort.displayName || cohort.name || cohort.cohortId,
+          status: cohort.status || "active",
+          startDate: cohort.startDate ? new Date(cohort.startDate).toLocaleDateString() : "",
+          endDate: cohort.endDate ? new Date(cohort.endDate).toLocaleDateString() : "",
+          numberOfSessions: cohort.numberOfSessions || 4,
+          stats: cohort.stats || {},
+        }));
+
+        // Store in cache
+        const cacheData = { data: cohortsData, timestamp: Date.now() };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        cacheRef.current = cacheData;
+
+        console.log(`[past-cohorts] Loaded ${cohortsData.length} cohorts`);
         setCohorts(cohortsData);
       } catch (err) {
-        console.error("Error loading cohorts:", err);
-        setError("Failed to load cohorts. Please try again.");
+        console.error("[past-cohorts] Error loading cohorts:", err);
+
+        // Fall back to cached data even if expired
+        if (cacheRef.current) {
+          console.log("[past-cohorts] Using stale cache as fallback");
+          setCohorts(cacheRef.current.data);
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to load cohorts. Please try again.");
+        }
       } finally {
         setLoading(false);
       }

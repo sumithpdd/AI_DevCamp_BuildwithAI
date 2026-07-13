@@ -13,6 +13,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { stripUndefinedForFirestoreClient } from "@/lib/stripUndefinedFirestore";
+import { logAnalyticsEvent } from "@/lib/analytics";
 import { UserProfile } from "@/types";
 
 /** Firebase `providerId` list for admin badges (e.g. google.com, password). */
@@ -87,6 +88,7 @@ export async function registerWithEmail(
   const result = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(result.user, { displayName });
   await createUserDocument(result.user, { displayName });
+  logAnalyticsEvent("sign_up", { method: "password" });
   return result;
 }
 
@@ -98,7 +100,9 @@ export async function loginWithEmail(email: string, password: string) {
     err.code = "auth/argument-error";
     throw err;
   }
-  return signInWithEmailAndPassword(auth, e, p);
+  const cred = await signInWithEmailAndPassword(auth, e, p);
+  logAnalyticsEvent("login", { method: "password" });
+  return cred;
 }
 
 /**
@@ -138,6 +142,7 @@ export async function loginWithGoogle(): Promise<UserCredential | null> {
     return null;
   }
   const result = await signInWithPopup(auth, googleProvider);
+  logAnalyticsEvent("login", { method: "google" });
   return result;
 }
 

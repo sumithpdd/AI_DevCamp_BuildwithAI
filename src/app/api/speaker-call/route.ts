@@ -32,6 +32,9 @@ const speakerCallSchema = z.object({
   recordingLink: z.string().url().optional().nullable(),
   additionalNotes: z.string().optional().nullable(),
   sessionType: z.enum(["talk", "workshop", "panel", "other"]),
+  experienceLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+  skills: z.array(z.string()).optional().default([]),
+  expertise: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "Validation failed",
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );
@@ -65,6 +68,9 @@ export async function POST(req: NextRequest) {
       recordingLink,
       additionalNotes,
       sessionType,
+      experienceLevel,
+      skills,
+      expertise,
     } = validation.data;
 
     // Check if cohort exists
@@ -91,6 +97,9 @@ export async function POST(req: NextRequest) {
       recordingLink: recordingLink || null,
       additionalNotes: additionalNotes || null,
       sessionType,
+      experienceLevel: experienceLevel || null,
+      skills: skills || [],
+      expertise: expertise || [],
       status: "submitted" as const,
       submittedAt: new Date(),
       submittedAtClient: new Date().toISOString(),
