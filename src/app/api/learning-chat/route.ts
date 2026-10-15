@@ -11,6 +11,7 @@ import { logLearningChatCall } from "@/lib/learning-chat/chatLog";
 import { getActiveCohortId } from "@/lib/cohorts";
 import { logServerRouteException } from "@/lib/server/appErrorLog";
 import { logActivityEvent } from "@/lib/server/activityLog";
+import { checkLearningChatRateLimit } from "@/lib/server/learningChatRateLimit";
 
 const bodySchema = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -65,6 +66,35 @@ export async function POST(request: NextRequest) {
     historyTurns = history?.length ?? 0;
     focusSessionId = focus;
     pathname = path;
+
+    // Usage limit: stop one person using up the shared Gemini budget.
+    // If they've hit their hourly limit, reply with a friendly message and
+    // don't call Gemini. See src/lib/server/learningChatRateLimit.ts.
+    const rate = await checkLearningChatRateLimit(auth.uid, auth.role);
+    if (rate.limited) {
+      const minutes = Math.ceil(rate.retryAfterSeconds / 60);
+      const message = `You've reached the limit of ${rate.limit} questions an hour. Please try again in about ${minutes} minute${minutes === 1 ? "" : "s"}.`;
+
+      // Still record the attempt in the chat log, marked as rate limited.
+      await logLearningChatCall({
+        userId: auth.uid,
+        userEmail: auth.email,
+        cohortId,
+        focusSessionId,
+        pathname,
+        messagePreview,
+        messageLength,
+        historyTurns,
+        ok: false,
+        error: "Rate limited",
+        durationMs: Date.now() - started,
+      }).catch(() => undefined);
+
+      // 429 = "Too Many Requests". Retry-After tells the browser when to try again.
+      const res = err(message, 429);
+      res.headers.set("Retry-After", String(rate.retryAfterSeconds));
+      return res;
+    }
 
     const result = await processLearningChat(message, {
       uid: auth.uid,
