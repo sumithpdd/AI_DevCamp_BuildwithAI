@@ -15,14 +15,21 @@ export type LearningChatContext = {
   history?: LearningChatHistoryTurn[];
 };
 
+/** A piece of course material the assistant used to answer (shown as "From: …"). */
+export type LearningChatSource = {
+  materialId: string;
+  title: string;
+  kind: string;
+  sessionId: string;
+  /** Session the material belongs to, e.g. "Scale — Workshop". */
+  sessionTitle?: string;
+  /** Link to the material (slides, video, PDF) when one exists. */
+  url?: string;
+};
+
 export type LearningChatResult = {
   text?: string;
-  sources?: Array<{
-    materialId: string;
-    title: string;
-    kind: string;
-    sessionId: string;
-  }>;
+  sources?: LearningChatSource[];
   error?: string;
 };
 

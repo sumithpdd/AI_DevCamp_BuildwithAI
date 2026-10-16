@@ -1,4 +1,11 @@
 import { auth } from "@/lib/firebase";
+import type { LearningChatSource } from "@/lib/learning-chat/constants";
+
+/** What the Learning Assistant sends back: the answer and the materials it used. */
+export type LearningChatReply = {
+  text: string;
+  sources: LearningChatSource[];
+};
 
 export async function postLearningChat(opts: {
   message: string;
@@ -6,7 +13,7 @@ export async function postLearningChat(opts: {
   pathname?: string;
   cohortId?: string;
   history?: Array<{ role: "user" | "assistant"; content: string }>;
-}): Promise<string> {
+}): Promise<LearningChatReply> {
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("Sign in to use the learning assistant");
 
@@ -21,7 +28,7 @@ export async function postLearningChat(opts: {
 
   const json = (await res.json()) as {
     ok?: boolean;
-    data?: { text?: string };
+    data?: { text?: string; sources?: LearningChatSource[] };
     error?: string;
   };
 
@@ -29,5 +36,8 @@ export async function postLearningChat(opts: {
     throw new Error(json.error || "Learning chat request failed");
   }
 
-  return json.data?.text || "Done.";
+  return {
+    text: json.data?.text || "Done.",
+    sources: Array.isArray(json.data?.sources) ? json.data.sources : [],
+  };
 }

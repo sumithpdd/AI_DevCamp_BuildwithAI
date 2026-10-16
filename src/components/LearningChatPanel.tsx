@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   LEARNING_CHAT_WELCOME,
   LEARNING_QUICK_PROMPTS,
+  type LearningChatSource,
 } from "@/lib/learning-chat/constants";
 import { postLearningChat } from "@/lib/learning-chat/clientApi";
 import { getActiveCohortId } from "@/lib/cohorts";
@@ -16,6 +17,8 @@ type ChatMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  /** Course materials an assistant answer was based on (shown under the reply). */
+  sources?: LearningChatSource[];
 };
 
 type LearningChatPanelProps = {
@@ -93,7 +96,12 @@ export function LearningChatPanel({
 
         setMessages((m) => [
           ...m,
-          { id: `a-${Date.now()}`, role: "assistant", content: reply },
+                    {
+            id: `a-${Date.now()}`,
+            role: "assistant",
+            content: reply.text,
+            sources: reply.sources,
+          },
         ]);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Something went wrong";
@@ -188,6 +196,34 @@ export function LearningChatPanel({
                   }`}
                 >
                   {msg.content}
+                                    {/* "From: …" — the course materials this answer was based on. */}
+                  {msg.role === "assistant" && msg.sources && msg.sources.length > 0 ? (
+                    <div className="mt-2 border-t border-white/10 pt-2 text-[11px] text-gray-400">
+                      <span className="font-medium text-gray-300">From: </span>
+                      {msg.sources.map((source, i) => {
+                        const label = source.sessionTitle
+                          ? `${source.title} (${source.sessionTitle})`
+                          : source.title;
+                        return (
+                          <span key={source.materialId}>
+                            {i > 0 ? " · " : null}
+                            {source.url ? (
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline decoration-white/30 hover:text-white"
+                              >
+                                {label}
+                              </a>
+                            ) : (
+                              label
+                            )}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             ))}

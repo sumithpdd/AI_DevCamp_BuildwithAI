@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
       return err(result.error, 502);
     }
 
-    return ok({ text: result.text });
+      // Send the answer plus the course materials it was based on.
+    return ok({ text: result.text, sources: result.sources ?? [] });
   } catch (e) {
     logServerRouteException("POST /api/learning-chat", e);
     await logLearningChatCall({
